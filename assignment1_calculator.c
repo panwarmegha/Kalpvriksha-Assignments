@@ -2,23 +2,22 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #define MAX_SIZE 100 
 
-
-int values[MAX_SIZE];
-int valueTop = -1;
+int numbers[MAX_SIZE];
+int numbersTop = -1;
 
 char operators[MAX_SIZE];
-int opTop = -1;
-
+int operatorsTop = -1;
 
 void pushValue(int val);
 int popValue();
-void pushOperator(char op);
+void pushOperator(char operator);
 char popOperator();
 char peekOperator();
-int getPrecedence(char op);
+int getPrecedence(char operator);
 void performOperation();
 void throwError(const char *msg);
 
@@ -26,20 +25,17 @@ int main()
 {
     char expression[MAX_SIZE];
 
-    
     if (fgets(expression, sizeof(expression), stdin) == NULL)
     {
         throwError("Error: Could not read expression.");
     }
 
-    
     for (int i = 0; i < strlen(expression); i++)
     {
         
         if (isspace(expression[i]))
             continue;
 
-        
         else if (isdigit(expression[i]))
         {
             int value = 0;
@@ -51,32 +47,28 @@ int main()
             pushValue(value);
             i--; 
         }
-
-        
+   
         else if (expression[i] == '+' || expression[i] == '-' || expression[i] == '*' || expression[i] == '/')
         {
-            while (opTop != -1 && getPrecedence(peekOperator()) >= getPrecedence(expression[i]))
+            while (operatorsTop != -1 && getPrecedence(peekOperator()) >= getPrecedence(expression[i]))
             {
                 performOperation();
             }
             pushOperator(expression[i]);
         }
-
-        
+    
         else
         {
             throwError("Error: Invalid character in expression.");
         }
     }
-
-    
-    while (opTop != -1)
+ 
+    while (operatorsTop != -1)
     {
         performOperation();
     }
-
-    
-    if (valueTop == 0 && opTop == -1)
+  
+    if (numbersTop == 0 && operatorsTop == -1)
         printf("Result: %d", popValue());
     else
         throwError("Error: Malformed expression.");
@@ -86,44 +78,44 @@ int main()
 
 void pushValue(int val)
 {
-    if (valueTop >= MAX_SIZE - 1)
+    if (numbersTop >= MAX_SIZE - 1)
         throwError("Error: Value stack overflow.");
-    values[++valueTop] = val;
+    numbers[++numbersTop] = val;
 }
 
 int popValue()
 {
-    if (valueTop < 0)
+    if (numbersTop < 0)
         throwError("Error: Value stack underflow.");
-    return values[valueTop--];
+    return numbers[numbersTop--];
 }
 
-void pushOperator(char op)
+void pushOperator(char operator)
 {
-    if (opTop >= MAX_SIZE - 1)
+    if (operatorsTop >= MAX_SIZE - 1)
         throwError("Error: Operator stack overflow.");
-    operators[++opTop] = op;
+    operators[++operatorsTop] = operator;
 }
 
 char popOperator()
 {
-    if (opTop < 0)
+    if (operatorsTop < 0)
         throwError("Error: Operator stack underflow.");
-    return operators[opTop--];
+    return operators[operatorsTop--];
 }
 
 char peekOperator()
 {
-    if (opTop < 0)
+    if (operatorsTop < 0)
         throwError("Error: No operator found.");
-    return operators[opTop];
+    return operators[operatorsTop];
 }
 
-int getPrecedence(char op)
+int getPrecedence(char operator)
 {
-    if (op == '*' || op == '/')
+    if (operator == '*' || operator == '/')
         return 2;
-    if (op == '+' || op == '-')
+    if (operator == '+' || operator == '-')
         return 1;
     return 0;
 }
@@ -132,23 +124,38 @@ void performOperation()
 {
     int rightOperand = popValue();
     int leftOperand = popValue();
-    char op = popOperator();
+    char operator = popOperator();
 
-    switch (op)
+    switch (operator)
     {
     case '+':
+        if ((rightOperand > 0 && leftOperand > INT_MAX - rightOperand) ||
+            (rightOperand < 0 && leftOperand < INT_MIN - rightOperand)) {
+            throwError("Error: Integer overflow in addition.");
+        }
         pushValue(leftOperand + rightOperand);
         break;
     case '-':
+        if ((rightOperand < 0 && leftOperand > INT_MAX + rightOperand) ||
+            (rightOperand > 0 && leftOperand < INT_MIN + rightOperand)) {
+            throwError("Error: Integer overflow in subtraction.");
+        }
         pushValue(leftOperand - rightOperand);
         break;
     case '*':
+        if (leftOperand != 0 && rightOperand != 0) {
+            if (leftOperand > INT_MAX / rightOperand || leftOperand < INT_MIN / rightOperand) {
+                throwError("Error: Integer overflow in multiplication.");
+            }
+        }
         pushValue(leftOperand * rightOperand);
         break;
     case '/':
         if (rightOperand == 0)
             throwError("Error: Division by zero.");
-        pushValue(leftOperand / rightOperand);
+         if (leftOperand == INT_MIN && rightOperand == -1)
+            throwError("Error: Integer overflow in division.");
+            pushValue(leftOperand / rightOperand);
         break;
     default:
         throwError("Error: Unknown operator.");
