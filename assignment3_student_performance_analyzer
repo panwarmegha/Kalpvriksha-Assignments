@@ -3,6 +3,11 @@
 #include <stdbool.h>
 #define MAX_STUDENT 100
 #define NUM_SUBJECTS 3
+#define GRADE_A_MIN 85
+#define GRADE_B_MIN 70
+#define GRADE_C_MIN 50
+#define GRADE_D_MIN 35
+
 
 typedef enum
 {
@@ -29,53 +34,53 @@ typedef struct
      int marks[NUM_SUBJECTS];
 } Student;
 
-void inputStudentDetails(Student students[], int *n);
-void printStudentData(Student students[], int n);
-void sortStudentsByRoll(Student students[], int n);
+void inputStudentDetails(Student students[], int *totalStudents);
+void printStudentData(Student students[], int totalStudents);
+void sortStudentsByRoll(Student students[], int totalStudents);
 int calculateTotal(int subjectMarks[], int subjectCount);
 float calculateAverage(int totalMarks, int subjectCount);
 Grade assignGrade(float averageMarks);
 void printPerformanceStar(int starCount);
-void printRollNumber(Student students[], int it, int n);
+void printRollNumber(Student students[], int counter, int totalStudents);
 bool isValidMark(int subjectMarks[], int subjectCount);
 bool isValidRollNumber(Student students[], int count, int rollNumber);
 PerformanceStars mapGradeToPerformance(Grade g);
 
 int main()
 {
-     int N;
+     int numberofStudents;
      Student students[MAX_STUDENT];
 
-     inputStudentDetails(students, &N);
-     sortStudentsByRoll(students, N);
-     printStudentData(students, N);
+     inputStudentDetails(students, &numberofStudents);
+     sortStudentsByRoll(students, numberofStudents);
+     printStudentData(students, numberofStudents);
 
      printf("\nList of Roll Numbers : ");
-     printRollNumber(students, 0, N);
+     printRollNumber(students, 0, numberofStudents);
      printf("\n");
 
      return 0;
 }
 
-void inputStudentDetails(Student students[], int *n)
+void inputStudentDetails(Student students[], int *totalStudents)
 {
-     scanf("%d", n);
+     scanf("%d", totalStudents);
      bool validRoll = false;
      bool validMarks = false;
 
-     for (int i = 0; i < *n; i++)
+     for (int index = 0; index < *totalStudents; index++)
      {
           do
           {
 
-               scanf("%d %s %d %d %d", &students[i].rollNumber, students[i].name,
-                     &students[i].marks[0], &students[i].marks[1], &students[i].marks[2]);
-               validRoll = isValidRollNumber(students, i, students[i].rollNumber);
+               scanf("%d %s %d %d %d", &students[index].rollNumber, students[index].name,
+                     &students[index].marks[0], &students[index].marks[1], &students[index].marks[2]);
+               validRoll = isValidRollNumber(students, index, students[index].rollNumber);
                if (!validRoll)
                {
                     printf("\n Error: Duplicate roll number! \n");
                }
-               validMarks = isValidMark(students[i].marks, NUM_SUBJECTS);
+               validMarks = isValidMark(students[index].marks, NUM_SUBJECTS);
                if (!validMarks)
                {
                     printf("\n Error: Marks must be between 0 and 100.\n");
@@ -84,16 +89,16 @@ void inputStudentDetails(Student students[], int *n)
      }
 }
 
-void printStudentData(Student students[], int n)
+void printStudentData(Student students[], int totalStudents)
 {
-     for (int i = 0; i < n; i++)
+     for (int index = 0; index < totalStudents; index++)
      {
-          int totalMarks = calculateTotal(students[i].marks, NUM_SUBJECTS);
+          int totalMarks = calculateTotal(students[index].marks, NUM_SUBJECTS);
           float averageMarks = calculateAverage(totalMarks, NUM_SUBJECTS);
           Grade grade = assignGrade(averageMarks);
 
-          printf("\nRoll: %d\n", students[i].rollNumber);
-          printf("Name: %s\n", students[i].name);
+          printf("\nRoll: %d\n", students[index].rollNumber);
+          printf("Name: %s\n", students[index].name);
           printf("Total: %d\n", totalMarks);
           printf("Average: %.2f\n", averageMarks);
           printf("Grade: %c\n", (char)grade);
@@ -107,17 +112,17 @@ void printStudentData(Student students[], int n)
      }
 }
 
-void sortStudentsByRoll(Student students[], int n)
+void sortStudentsByRoll(Student students[], int totalStudents)
 {
-     for (int i = 0; i < n - 1; i++)
+     for (int index = 0; index < totalStudents - 1; index++)
      {
-          for (int j = i + 1; j < n; j++)
+          for (int index_1 = index + 1; index_1 < totalStudents; index_1++)
           {
-               if (students[i].rollNumber > students[j].rollNumber)
+               if (students[index].rollNumber > students[index_1].rollNumber)
                {
-                    Student temp = students[i];
-                    students[i] = students[j];
-                    students[j] = temp;
+                    Student temporary = students[index];
+                    students[index] = students[index_1];
+                    students[index_1] = temporary;
                }
           }
      }
@@ -126,9 +131,9 @@ void sortStudentsByRoll(Student students[], int n)
 int calculateTotal(int subjectMarks[], int subjectCount)
 {
      int total = 0;
-     for (int i = 0; i < subjectCount; i++)
+     for (int index = 0; index < subjectCount; index++)
      {
-          total += subjectMarks[i];
+          total += subjectMarks[index];
      }
      return total;
 }
@@ -142,13 +147,13 @@ float calculateAverage(int totalMarks, int subjectCount)
 
 Grade assignGrade(float averageMarks)
 {
-     if (averageMarks >= 85)
+     if (averageMarks >= GRADE_A_MIN)
           return A;
-     if (averageMarks >= 70)
+     if (averageMarks >= GRADE_B_MIN)
           return B;
-     if (averageMarks >= 50)
+     if (averageMarks >= GRADE_C_MIN)
           return C;
-     if (averageMarks >= 35)
+     if (averageMarks >= GRADE_D_MIN)
           return D;
      return F;
 }
@@ -156,28 +161,28 @@ Grade assignGrade(float averageMarks)
 void printPerformanceStar(int starCount)
 {
      printf("Performance: ");
-     for (int i = 0; i < starCount; i++)
+     for (int index = 0; index < starCount; index++)
      {
           printf("*");
      }
      printf("\n");
 }
 
-void printRollNumber(Student students[], int it, int n)
+void printRollNumber(Student students[], int counter, int totalStudents)
 {
-     if (it >= n)
+     if (counter >= totalStudents)
      {
           return;
      }
-     printf("%d ", students[it].rollNumber);
-     printRollNumber(students, it + 1, n);
+     printf("%d ", students[counter].rollNumber);
+     printRollNumber(students, counter + 1, totalStudents);
 }
 
 bool isValidMark(int subjectMarks[], int subjectCount)
 {
-     for (int i = 0; i < subjectCount; i++)
+     for (int index = 0; index < subjectCount; index++)
      {
-          if (subjectMarks[i] < 0 || subjectMarks[i] > 100)
+          if (subjectMarks[index] < 0 || subjectMarks[index] > 100)
           {
                return false;
           }
@@ -187,9 +192,9 @@ bool isValidMark(int subjectMarks[], int subjectCount)
 
 bool isValidRollNumber(Student students[], int count, int rollNumber)
 {
-     for (int i = 0; i < count; i++)
+     for (int index = 0; index < count; index++)
      {
-          if (students[i].rollNumber == rollNumber)
+          if (students[index].rollNumber == rollNumber)
           {
                return false;
           }
